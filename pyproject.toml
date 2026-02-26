@@ -148,6 +148,8 @@ override-dependencies = [
     "numpy<2",
     "huggingface-hub>=0.19.3,<1.0",
     "timm>=0.9.10,<1.0.0",
+    "transformers==4.40.1",
+    "tokenizers==0.19.1",
 ]
 
 [tool.setuptools]

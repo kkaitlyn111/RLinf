@@ -15,7 +15,9 @@ hydra:
 cluster:
   num_nodes: 1
   component_placement:
-    actor,env,rollout: 0-3  # 4 GPUs
+    actor: 0-3        # Actor sharded across 4 GPUs (each holds 1/4 of model)
+    rollout: 0-1      # Rollout on only 2 GPUs (fewer inference workers)
+    env: 2-3          # Env on separate GPUs
 
 runner:
   task_type: embodied
@@ -81,7 +83,7 @@ env:
   group_name: "EnvGroup"
 
   train:
-    total_num_envs: 16
+    total_num_envs: 8
     auto_reset: True
     ignore_terminations: True
     use_fixed_reset_state_ids: False
@@ -89,7 +91,7 @@ env:
     max_steps_per_rollout_epoch: 80
     enable_offload: True
   eval:
-    total_num_envs: 16
+    total_num_envs: 8
     auto_reset: True
     ignore_terminations: True
     max_episode_steps: 80
@@ -104,10 +106,10 @@ env:
 rollout:
   group_name: "RolloutGroup"
   backend: "huggingface"
-  gpu_memory_utilization: 0.5
+  gpu_memory_utilization: 0.4
   enforce_eager: True
   enable_offload: True
-  pipeline_stage_num: 2
+  pipeline_stage_num: 1
 
   model:
     model_path: "/juice5b/scr5b/kaitwang/cs234/openvla-7b-rlvla-warmup"
@@ -117,8 +119,8 @@ actor:
   group_name: "ActorGroup"
   training_backend: "fsdp"
 
-  micro_batch_size: 10
-  global_batch_size: 40
+  micro_batch_size: 4
+  global_batch_size: 16
   seed: 1234
   enable_offload: True
 
@@ -141,7 +143,7 @@ actor:
   fsdp_config:
     strategy: "fsdp"
     gradient_checkpointing: True
-    cpu_offload: False
+    cpu_offload: True
     mixed_precision:
       param_dtype: ${actor.model.precision}
       reduce_dtype: ${actor.model.precision}
