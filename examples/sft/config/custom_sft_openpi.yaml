@@ -1,6 +1,7 @@
 defaults:
   - model/pi0@actor.model
   - training_backend/fsdp@actor.fsdp_config
+  - env/maniskill_pick_cube.yaml
   - override hydra/job_logging: stdout
 
 hydra:
@@ -23,13 +24,13 @@ runner:
     experiment_name: "test_openpi"
     logger_backends: ["tensorboard"] # wandb, swanlab
 
-  max_epochs: 1000
+  max_epochs: 300
   max_steps: -1
   val_check_interval: -1
   save_interval: 10
 
 data:
-  data_path: "/path/to/custom-data"
+  data_path: "/juice5b/scr5b/kaitwang/cs234/ManiSkill/data/PickCube-v1"
 
 algorithm:
   adv_type: gae
@@ -44,11 +45,11 @@ actor:
   # Override the default values in model/pi0
   model:
     precision: null
-    model_path: "/path/to/pi0-model"
+    model_path: "gs://openpi-assets/checkpoints/pi0_base"
     num_action_chunks: 4 # interface for the env
     add_value_head: True
     openpi:
-      config_name: "pi0_custom"
+      config_name: "pi0_maniskill"
       detach_critic_input: True
 
   optim:

@@ -111,7 +111,11 @@ class ManiskillEnv(gym.Env):
 
     @property
     def instruction(self):
-        return self.env.unwrapped.get_language_instruction()
+        try:
+            return self.env.unwrapped.get_language_instruction()
+        except AttributeError:
+            # Envs like PushCube don't have get_language_instruction; return a list of strings, one per env
+            return [self.cfg.init_params.id] * self.num_envs
 
     def _init_reset_state_ids(self):
         self._generator = torch.Generator()
@@ -148,6 +152,9 @@ class ManiskillEnv(gym.Env):
             state = common.flatten_state_dict(
                 state_inputs, use_torch=True, device=self.device
             )
+            state_dim = getattr(self.cfg, "state_dim", None)
+            if state_dim is not None:
+                state = state[:, :state_dim]
 
             main_images = sensor_data["base_camera"]["rgb"]
             sorted_images = OrderedDict(sorted(sensor_data.items()))
@@ -161,6 +168,7 @@ class ManiskillEnv(gym.Env):
                 "main_images": main_images,
                 "extra_view_images": extra_view_images,
                 "states": state,
+                "task_descriptions": self.instruction,
             }
 
         # Default
