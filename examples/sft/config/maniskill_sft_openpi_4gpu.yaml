@@ -23,10 +23,10 @@ runner:
     experiment_name: "maniskill_sft_openpi_4gpu"
     logger_backends: ["tensorboard"]
 
-  max_epochs: 5000
+  max_epochs: 500
   max_steps: -1
   val_check_interval: -1
-  save_interval: 500
+  save_interval: 1
 
 data:
   data_path: "/juice5b/scr5b/kaitwang/cs234/maniskill-demos"
@@ -37,7 +37,7 @@ algorithm:
 actor:
   group_name: "ActorGroup"
   training_backend: "fsdp"
-  micro_batch_size: 2
+  micro_batch_size: 16
   global_batch_size: 64
   seed: 0
 

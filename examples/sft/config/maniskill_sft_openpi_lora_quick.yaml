@@ -20,7 +20,7 @@ runner:
   logger:
     log_path: "../results"
     project_name: rlinf
-    experiment_name: "maniskill_sft_openpi_lora_quick"
+    experiment_name: "maniskill_sft_openpi_pi05_lora_4gpu"
     logger_backends: ["tensorboard"]
 
   max_epochs: 500
@@ -43,14 +43,16 @@ actor:
 
   model:
     precision: null
-    model_path: "/juice5b/scr5b/kaitwang/cs234/pi0-maniskill-sft"
+    model_path: "/juice5b/scr5b/kaitwang/cache/huggingface/hub/RLinf-Pi05-ManiSkill-25Main-SFT"
     num_action_chunks: 4
+    num_steps: 5
     add_value_head: True
     is_lora: True
     lora_rank: 32
     openpi:
-      config_name: "pi0_maniskill"
-      detach_critic_input: True
+      pi05: True
+      config_name: "pi05_maniskill"
+      noise_method: "flow_sde"
       train_expert_only: False
 
   optim:
