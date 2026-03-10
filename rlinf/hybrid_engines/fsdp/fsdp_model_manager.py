@@ -308,6 +308,7 @@ class FSDPModelManager:
             self.optimizer,
             self.lr_scheduler,
             save_path,
+            save_full_model_weights=False,
         )
 
     def offload_param_and_grad(self, offload_grad: bool = False) -> None:
