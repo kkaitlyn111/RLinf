@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=PPOpi05
-#SBATCH --output=/juice5b/scr5b/kaitwang/cs234/RLinf/logs/PPOpi05_%A.out
-#SBATCH --error=/juice5b/scr5b/kaitwang/cs234/RLinf/logs/PPOpi05_%A.err
+#SBATCH --job-name=PPOpi05save5
+#SBATCH --output=/juice5b/scr5b/kaitwang/cs234/RLinf/logs/PPOpi05save5_%A.out
+#SBATCH --error=/juice5b/scr5b/kaitwang/cs234/RLinf/logs/PPOpi05save5_%A.err
 #SBATCH --cpus-per-task=20
 #SBATCH --gres=gpu:4
 #SBATCH --constraint=48G
@@ -17,4 +17,4 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 cd /juice5b/scr5b/kaitwang/cs234/RLinf
 source .venv/bin/activate
 export RAY_ADDRESS="local"
-bash examples/embodiment/run_embodiment.sh maniskill_ppo_openpi_pi05_push_cube
+bash examples/embodiment/run_embodiment.sh maniskill_ppo_openpi_pi05_push_cube_save5

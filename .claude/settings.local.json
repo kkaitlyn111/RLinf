@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(squeue -u kaitwang 2>&1)",
+      "Bash(ls -lt /juice5b/scr5b/kaitwang/cs234/RLinf/logs/PPOpi05_*.out 2>/dev/null | head -5)",
+      "Bash(sbatch /juice5b/scr5b/kaitwang/cs234/RLinf/scripts/run_ppo_pi05.sh 2>&1)"
+    ]
+  }
+}

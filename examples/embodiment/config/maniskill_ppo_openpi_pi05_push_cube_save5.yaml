@@ -24,14 +24,14 @@ runner:
   logger:
     log_path: "../results"
     project_name: rlinf
-    experiment_name: "maniskill_ppo_openpi_pi05_push_cube"
+    experiment_name: "maniskill_ppo_openpi_pi05_push_cube_save5"
     logger_backends: ["tensorboard", "wandb"]
 
-  max_epochs: 200  # PushCube from domain SFT should converge in ~100-200 epochs; ~20-30 min/epoch → ~2.5-4 days on one 48GB GPU
+  max_epochs: 200
   max_steps: -1
   only_eval: False
-  val_check_interval: 5   # eval every 5 epochs for tight progress tracking over a shorter run
-  save_interval: 50       # must be divisible by val_check_interval=5; saves at 50,100,150,200
+  val_check_interval: 5
+  save_interval: 5        # save every 5 epochs for fast debugging; runner offloads rollout before FSDP all_gather so save+eval are sequential not concurrent
 
   resume_dir: null
   ckpt_path: null

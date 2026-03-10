@@ -636,10 +636,36 @@ class OpenPi0ForRLActionPrediction(PI0Pytorch, BasePolicy):
             "eager"  # noqa: SLF001
         )
 
+        # Cast suffix_embs (and adarms_cond) to match model weight dtype.
+        # action_in_proj / time_mlp produce float32 tensors, but gemma_expert
+        # weights are bfloat16 after to_bfloat16_for_selected_params, causing
+        # dtype mismatch in q_proj. Mirror the cast in pi0_pytorch.py forward().
+        if (
+            self.paligemma_with_expert.gemma_expert.model.layers[0].self_attn.q_proj.weight.dtype
+            == torch.bfloat16
+        ):
+            suffix_embs = suffix_embs.to(dtype=torch.bfloat16)
+            if adarms_cond is not None:
+                adarms_cond = adarms_cond.to(dtype=torch.bfloat16)
+
+        # Clone the DynamicCache to prevent in-place mutation across denoising steps.
+        # With use_cache=False, transformers still calls past_key_value.update() in
+        # the attention layers (appending suffix KVs), growing the cache by suffix_len
+        # each step. The mask is built from prefix_len only, so on step 2+ the kv_len
+        # exceeds the mask size. Cloning ensures each step sees only the prefix KVs.
+        if past_key_values is not None:
+            from transformers import DynamicCache as _DynamicCache
+            pkvs = _DynamicCache()
+            pkvs._seen_tokens = past_key_values._seen_tokens  # noqa: SLF001
+            pkvs.key_cache = [k.clone() for k in past_key_values.key_cache]
+            pkvs.value_cache = [v.clone() for v in past_key_values.value_cache]
+        else:
+            pkvs = None
+
         outputs_embeds, _ = self.paligemma_with_expert.forward(
             attention_mask=full_att_2d_masks_4d,
             position_ids=position_ids,
-            past_key_values=past_key_values,
+            past_key_values=pkvs,
             inputs_embeds=[None, suffix_embs],
             use_cache=False,
             adarms_cond=[None, adarms_cond],

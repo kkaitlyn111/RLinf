@@ -7,6 +7,7 @@ total_num_envs: null
 auto_reset: False
 ignore_terminations: False
 use_rel_reward: True
+reward_mode: "raw"  # PushCube-v1 lacks is_src_obj_grasped; use ManiSkill native dense reward
 seed: 0
 group_size: 1
 use_fixed_reset_state_ids: True

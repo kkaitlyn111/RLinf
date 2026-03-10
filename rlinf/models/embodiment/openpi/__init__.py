@@ -15,6 +15,7 @@
 
 import os
 
+import torch
 from omegaconf import DictConfig
 
 
@@ -57,6 +58,11 @@ def get_model(cfg: DictConfig, torch_dtype=None):
     for weight_path in weight_paths:
         safetensors.torch.load_model(model, weight_path, strict=False)
     model.paligemma_with_expert.to_bfloat16_for_selected_params("bfloat16")
+    # Override the selective float32 re-cast: cast everything to bfloat16.
+    # to_bfloat16_for_selected_params keeps input_layernorm/post_attention_layernorm
+    # in float32, but without autocast this causes dtype mismatch errors during
+    # inference (float32 LN output → bfloat16 q_proj weight).
+    model.paligemma_with_expert.to(dtype=torch.bfloat16)
     # fsdp replace
     # model.paligemma_with_expert.replace_gemma_decoder_layers()
     # load data stats

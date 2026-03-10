@@ -117,27 +117,35 @@ class EmbodiedRunner:
 
     def init_workers(self):
         # create worker in order to decrease the maximum memory usage
+        print("[RUNNER] init_workers: initializing actor worker...")
         self.actor.init_worker().wait()
+        print("[RUNNER] init_workers: actor done, initializing rollout worker...")
         self.rollout.init_worker().wait()
+        print("[RUNNER] init_workers: rollout done, initializing env worker...")
         self.env.init_worker().wait()
+        print("[RUNNER] init_workers: all workers initialized")
 
         resume_dir = self.cfg.runner.get("resume_dir", None)
         if resume_dir is None:
             return
 
         self.logger.info(f"Resuming training from checkpoint directory {resume_dir}.")
+        print(f"[RUNNER] init_workers: resuming from {resume_dir}")
         actor_checkpoint_path = os.path.join(resume_dir, "actor")
         assert os.path.exists(actor_checkpoint_path), (
             f"resume_dir {actor_checkpoint_path} does not exist."
         )
         self.actor.load_checkpoint(actor_checkpoint_path).wait()
         self.global_step = int(resume_dir.split("global_step_")[-1])
+        print(f"[RUNNER] init_workers: resumed at global_step={self.global_step}")
 
     def update_rollout_weights(self):
+        print(f"[RUNNER] update_rollout_weights: syncing weights (step={self.global_step})...")
         rollout_handle: Handle = self.rollout.sync_model_from_actor()
         actor_handle: Handle = self.actor.sync_model_to_rollout()
         actor_handle.wait()
         rollout_handle.wait()
+        print("[RUNNER] update_rollout_weights: weight sync done")
 
     def evaluate(self):
         env_handle: Handle = self.env.evaluate(
@@ -157,7 +165,9 @@ class EmbodiedRunner:
     def run(self):
         start_step = self.global_step
         start_time = time.time()
+        print(f"[RUNNER] run: starting training loop from step={start_step}, max_steps={self.max_steps}")
         for _step in range(start_step, self.max_steps):
+            print(f"[RUNNER] ===== step {_step}/{self.max_steps} (global_step={self.global_step}) =====")
             # set global step
             self.actor.set_global_step(self.global_step)
             self.rollout.set_global_step(self.global_step)
@@ -165,32 +175,43 @@ class EmbodiedRunner:
             with self.timer("step"):
                 with self.timer("sync_weights"):
                     if _step % self.weight_sync_interval == 0:
+                        print(f"[RUNNER] step {_step}: weight sync interval hit, syncing...")
                         self.update_rollout_weights()
                 with self.timer("generate_rollouts"):
+                    print(f"[RUNNER] step {_step}: launching env.interact...")
                     env_handle: Handle = self.env.interact(
                         input_channel=self.rollout_channel,
                         output_channel=self.env_channel,
                     )
+                    print(f"[RUNNER] step {_step}: launching rollout.generate...")
                     rollout_handle: Handle = self.rollout.generate(
                         input_channel=self.env_channel,
                         output_channel=self.rollout_channel,
                         actor_channel=self.actor_channel,
                     )
+                    print(f"[RUNNER] step {_step}: waiting for actor.recv_rollout_trajectories...")
                     self.actor.recv_rollout_trajectories(
                         input_channel=self.actor_channel
                     ).wait()
+                    print(f"[RUNNER] step {_step}: waiting for rollout.generate to finish...")
                     rollout_handle.wait()
+                    print(f"[RUNNER] step {_step}: rollout generation complete")
 
                 # compute advantages and returns.
                 with self.timer("cal_adv_and_returns"):
+                    print(f"[RUNNER] step {_step}: computing advantages and returns...")
                     actor_rollout_metrics = (
                         self.actor.compute_advantages_and_returns().wait()
                     )
+                    print(f"[RUNNER] step {_step}: advantages computed")
 
                 # actor training.
+                print(f"[RUNNER] step {_step}: launching actor training...")
                 actor_training_handle: Handle = self.actor.run_training()
 
+                print(f"[RUNNER] step {_step}: waiting for actor training to finish...")
                 actor_training_metrics = actor_training_handle.wait()
+                print(f"[RUNNER] step {_step}: actor training complete")
 
                 self.global_step += 1
 
@@ -205,13 +226,16 @@ class EmbodiedRunner:
 
                 eval_metrics = {}
                 if run_val:
+                    print(f"[RUNNER] step {_step}: running evaluation...")
                     with self.timer("eval"):
                         self.update_rollout_weights()
                         eval_metrics = self.evaluate()
                         eval_metrics = {f"eval/{k}": v for k, v in eval_metrics.items()}
                         self.metric_logger.log(data=eval_metrics, step=_step)
+                    print(f"[RUNNER] step {_step}: eval done, success={eval_metrics.get('eval/success_once', 'N/A')}")
 
                 if save_model:
+                    print(f"[RUNNER] step {_step}: saving checkpoint...")
                     self._save_checkpoint()
 
             time_metrics = self.timer.consume_durations()
@@ -261,15 +285,22 @@ class EmbodiedRunner:
                 _step, self.max_steps, start_time, logging_metrics, start_step
             )
 
+        print(f"[RUNNER] run: training loop finished at global_step={self.global_step}")
         self.metric_logger.finish()
 
         # Stop logging thread
         self.stop_logging = True
         self.log_queue.join()  # Wait for all queued logs to be processed
         self.log_thread.join(timeout=1.0)
+        print("[RUNNER] run: metric logger and log thread shut down")
 
     def _save_checkpoint(self):
         self.logger.info(f"Saving checkpoint at step {self.global_step}.")
+        print(f"[RUNNER] _save_checkpoint: offloading rollout model before save...")
+        # Offload rollout model to CPU before actor checkpoint: actor's load_param_and_grad
+        # reloads params onto all actor GPUs (including rollout GPUs 2-3), causing OOM if
+        # the rollout model is still resident from the preceding eval rollout.
+        self.rollout.offload_model().wait()
         base_output_dir = os.path.join(
             self.cfg.runner.logger.log_path,
             self.cfg.runner.logger.experiment_name,
@@ -277,7 +308,9 @@ class EmbodiedRunner:
         )
         actor_save_path = os.path.join(base_output_dir, "actor")
         os.makedirs(actor_save_path, exist_ok=True)
+        print(f"[RUNNER] _save_checkpoint: saving actor to {actor_save_path}...")
         self.actor.save_checkpoint(actor_save_path, self.global_step).wait()
+        print(f"[RUNNER] _save_checkpoint: checkpoint saved at step={self.global_step}")
 
     def set_max_steps(self):
         self.num_steps_per_epoch = 1
