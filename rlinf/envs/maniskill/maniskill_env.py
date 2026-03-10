@@ -111,7 +111,12 @@ class ManiskillEnv(gym.Env):
 
     @property
     def instruction(self):
-        return self.env.unwrapped.get_language_instruction()
+        if hasattr(self.env.unwrapped, "get_language_instruction"):
+            return self.env.unwrapped.get_language_instruction()
+        task_instruction = getattr(self.cfg, "task_instruction", None)
+        if task_instruction is not None:
+            return [task_instruction] * self.num_envs
+        return None
 
     def _init_reset_state_ids(self):
         self._generator = torch.Generator()
@@ -164,7 +169,8 @@ class ManiskillEnv(gym.Env):
             }
 
         # Default
-        obs_image = raw_obs["sensor_data"]["3rd_view_camera"]["rgb"].to(
+        camera_name = getattr(self.cfg, "camera_name", "3rd_view_camera")
+        obs_image = raw_obs["sensor_data"][camera_name]["rgb"].to(
             torch.uint8
         )  # [B, H, W, C]
         proprioception: torch.Tensor = self.env.unwrapped.agent.robot.get_qpos().to(
