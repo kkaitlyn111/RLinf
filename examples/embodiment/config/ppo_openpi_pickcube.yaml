@@ -87,6 +87,7 @@ env:
   group_name: "EnvGroup"
 
   train:
+    use_ee_proprioception: True
     total_num_envs: 16
     auto_reset: True
     use_fixed_reset_state_ids: False
@@ -94,6 +95,7 @@ env:
     max_steps_per_rollout_epoch: 40
 
   eval:
+    use_ee_proprioception: True
     total_num_envs: 16
     auto_reset: True
     ignore_terminations: True

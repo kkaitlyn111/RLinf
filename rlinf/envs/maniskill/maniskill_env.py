@@ -24,6 +24,7 @@ from mani_skill.utils.structs.types import Array
 from mani_skill.utils.visualization.misc import put_info_on_image, tile_images
 from omegaconf import open_dict
 from omegaconf.omegaconf import OmegaConf
+from transforms3d.euler import mat2euler
 
 __all__ = ["ManiskillEnv"]
 
@@ -173,9 +174,33 @@ class ManiskillEnv(gym.Env):
         obs_image = raw_obs["sensor_data"][camera_name]["rgb"].to(
             torch.uint8
         )  # [B, H, W, C]
-        proprioception: torch.Tensor = self.env.unwrapped.agent.robot.get_qpos().to(
-            obs_image.device, dtype=torch.float32
-        )
+
+        if getattr(self.cfg, "use_ee_proprioception", False):
+            # Compute 7D proprioception [ee_pos(3), ee_euler(3), gripper(1)]
+            # matching the format used by SFT training envs (e.g. PutOnPlateInScene)
+            gripper_state = (
+                self.env.unwrapped.agent.robot.get_qpos().to(torch.float32)[:, -1:] * 2
+            )
+            agent = self.env.unwrapped.agent
+            if hasattr(agent, "ee_pose_at_robot_base"):
+                ee_pose = agent.ee_pose_at_robot_base
+            else:
+                # Standard ManiSkill agents: compute tcp pose in robot base frame
+                ee_pose = agent.robot.pose.inv() * agent.tcp.pose
+            ee_pose_T = ee_pose.to_transformation_matrix().cpu().numpy()  # (num_envs, 4, 4)
+            pos = torch.from_numpy(ee_pose_T[:, :3, 3]).to(gripper_state.device)
+            euler = torch.from_numpy(
+                np.stack(
+                    [mat2euler(ee_pose_T[i, :3, :3], "sxyz") for i in range(self.num_envs)],
+                    axis=0,
+                )
+            ).to(gripper_state.device)
+            proprioception = torch.cat([pos, euler, gripper_state], dim=1)  # (num_envs, 7)
+        else:
+            proprioception = self.env.unwrapped.agent.robot.get_qpos().to(
+                obs_image.device, dtype=torch.float32
+            )
+
         return {
             "main_images": obs_image,
             "states": proprioception,
