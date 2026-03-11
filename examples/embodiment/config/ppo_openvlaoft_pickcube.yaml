@@ -32,10 +32,9 @@ runner:
 
   only_eval: False
   val_check_interval: -1
-  save_interval: 2
+  save_interval: 40
 
   resume_dir: null
-  # resume_dir: "logs/20260309-23:56:53-ppo_openvlaoft_pickcube/ppo_openvlaoft_pickcube/checkpoints/global_step_40"
   ckpt_path: null
 
 algorithm:
@@ -141,7 +140,7 @@ actor:
 
   fsdp_config:
     strategy: "fsdp"
-    sharding_strategy: "full_shard"
+    sharding_strategy: "shard_grad_op"
     gradient_checkpointing: True
     backward_prefetch: "pre"
     forward_prefetch: True

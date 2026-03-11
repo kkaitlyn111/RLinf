@@ -126,6 +126,9 @@ franka = [
 
 [tool.uv]
 prerelease = "allow"
+required-environments = [
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+]
 conflicts = [
     [
       { extra = "agentic-sglang" },
