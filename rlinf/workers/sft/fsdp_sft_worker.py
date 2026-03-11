@@ -65,6 +65,15 @@ class FSDPSftWorker(FSDPModelManager, Worker):
 
             from rlinf.models.embodiment.openpi.dataconfig import get_openpi_config
 
+            # Monkey-patch HF_LEROBOT_HOME on the lerobot module so local datasets
+            # are found at (parent of data_path) / repo_id. The constant is set at
+            # import time, so os.environ changes have no effect after import.
+            data_path = self.cfg.data.get("data_path", None)
+            if data_path:
+                from pathlib import Path
+                import lerobot.common.datasets.lerobot_dataset as _lerobot_ds
+                _lerobot_ds.HF_LEROBOT_HOME = Path(data_path).parent
+
             config = get_openpi_config(
                 self.cfg.actor.model.openpi.config_name,
                 model_path=self.cfg.actor.model.model_path,

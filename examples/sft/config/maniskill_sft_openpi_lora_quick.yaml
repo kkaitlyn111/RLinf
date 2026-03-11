@@ -51,7 +51,7 @@ actor:
     lora_rank: 32
     openpi:
       pi05: True
-      config_name: "pi05_maniskill"
+      config_name: "pi05_maniskill_pickcube"
       noise_method: "flow_sde"
       train_expert_only: False
 

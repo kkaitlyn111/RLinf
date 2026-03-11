@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"\nimport h5py\nf = h5py.File\\('/afs/cs.stanford.edu/u/kaitwang/.maniskill/demos/PickCube-v1/motionplanning/trajectory.rgb.pd_ee_delta_pos.physx_cpu.h5', 'r'\\)\nprint\\('num episodes:', len\\(f['data'].keys\\(\\)\\)\\)\nf.close\\(\\)\n\" 2>/dev/null)",
+      "Bash(source .venv/bin/activate && python3 -c \"\nimport h5py\nf = h5py.File\\('/afs/cs.stanford.edu/u/kaitwang/.maniskill/demos/PickCube-v1/motionplanning/trajectory.rgb.pd_ee_delta_pos.physx_cpu.h5', 'r'\\)\nprint\\('num episodes:', len\\(f['data'].keys\\(\\)\\)\\)\nf.close\\(\\)\n\")",
+      "Bash(source /juice5b/scr5b/kaitwang/cs234/RLinf/.venv/bin/activate && python3 -c \"\nimport h5py\nfor i in range\\(3\\):\n    f = h5py.File\\(f'/afs/cs.stanford.edu/u/kaitwang/.maniskill/demos/PickCube-v1/motionplanning/trajectory.rgb.pd_ee_delta_pose.physx_cpu.{i}.h5', 'r'\\)\n    trajs = [k for k in f.keys\\(\\) if k.startswith\\('traj_'\\)]\n    actions = f[trajs[0]]['actions']\n    print\\(f'shard {i}: {len\\(trajs\\)} episodes, action shape: {actions.shape}'\\)\n    f.close\\(\\)\n\")",
+      "Bash(source /juice5b/scr5b/kaitwang/cs234/RLinf/.venv/bin/activate && python3 -c \"\nimport h5py\nf = h5py.File\\('/afs/cs.stanford.edu/u/kaitwang/.maniskill/demos/PickCube-v1/motionplanning/trajectory.rgb.pd_ee_delta_pose.physx_cpu.0.h5', 'r', swmr=True\\)\ntrajs = [k for k in f.keys\\(\\) if k.startswith\\('traj_'\\)]\nactions = f[trajs[0]]['actions']\nprint\\(f'episodes: {len\\(trajs\\)}, action shape: {actions.shape}'\\)\nf.close\\(\\)\n\")",
+      "Bash(source /juice5b/scr5b/kaitwang/cs234/RLinf/.venv/bin/activate && python3 -c \"\nimport h5py\nf = h5py.File\\('/afs/cs.stanford.edu/u/kaitwang/.maniskill/demos/PickCube-v1/motionplanning/trajectory.rgb.pd_ee_delta_pose.physx_cpu.0.h5', 'r', locking=False\\)\ntrajs = [k for k in f.keys\\(\\) if k.startswith\\('traj_'\\)]\nactions = f[trajs[0]]['actions']\nprint\\(f'episodes: {len\\(trajs\\)}, action shape: {actions.shape}'\\)\nf.close\\(\\)\n\")",
+      "Bash(ls -lh ~/.maniskill/demos/PickCube-v1/motionplanning/trajectory.rgb.pd_ee_delta_pose.physx_cpu.*.h5)",
+      "Bash(cp ~/.maniskill/demos/PickCube-v1/motionplanning/trajectory.rgb.pd_ee_delta_pose.physx_cpu.0.h5 /tmp/test.h5 && source /juice5b/scr5b/kaitwang/cs234/RLinf/.venv/bin/activate && python3 -c \"\nimport h5py\nf = h5py.File\\('/tmp/test.h5', 'r'\\)\ntrajs = [k for k in f.keys\\(\\) if k.startswith\\('traj_'\\)]\nactions = f[trajs[0]]['actions']\nprint\\(f'episodes: {len\\(trajs\\)}, action shape: {actions.shape}'\\)\nf.close\\(\\)\n\")",
+      "Bash(echo $MANISKILL_DATA_DIR)",
+      "Bash(python3 -c \"import mani_skill; print\\(mani_skill.__file__\\)\")",
+      "Bash(python3 -c \"import lerobot; print\\(lerobot.__version__\\)\" 2>/dev/null || echo \"no lerobot in RLinf venv\"\nsource /juice5b/scr5b/kaitwang/cs234/RLinf/.venv/bin/activate && python3 -c \"import lerobot; print\\(lerobot.__version__\\)\" 2>/dev/null || echo \"no lerobot in RLinf venv\")",
+      "Bash(source /juice5b/scr5b/kaitwang/cs234/RLinf/.venv/bin/activate && python3 -c \"\nimport pandas as pd, json\n\ntasks_df = pd.read_parquet\\('/juice5b/scr5b/kaitwang/cs234/maniskill-demos/meta/tasks.parquet'\\)\nprint\\(tasks_df.head\\(\\)\\)\nprint\\(tasks_df.columns.tolist\\(\\)\\)\n\")"
+    ]
+  }
+}
