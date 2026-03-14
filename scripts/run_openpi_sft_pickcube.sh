@@ -3,7 +3,7 @@
 #SBATCH --output=/juice5b/scr5b/kaitwang/cs234/RLinf/logs/sftpi05_%A.out
 #SBATCH --error=/juice5b/scr5b/kaitwang/cs234/RLinf/logs/sftpi05_%A.err
 #SBATCH --cpus-per-task=20
-#SBATCH --gres=gpu:4
+#SBATCH --gres=gpu:1
 #SBATCH --constraint=48G
 #SBATCH --partition=jag-standard
 #SBATCH --account=nlp

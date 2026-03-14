@@ -122,15 +122,22 @@ class FSDPSftWorker(FSDPModelManager, Worker):
                 observation, actions = next(self.data_iter)
 
                 register_pytree_dataclasses(observation)
+                _model_precision = getattr(self.cfg.actor.model, "precision", None)
+                _float_dtype = (
+                    torch.bfloat16 if _model_precision == "bf16" else
+                    torch.float16 if _model_precision == "fp16" else
+                    None
+                )
+                def _to_device(x):
+                    t = torch.as_tensor(x, device=self.device).contiguous().clone()
+                    if _float_dtype is not None and t.is_floating_point():
+                        t = t.to(_float_dtype)
+                    return t
                 observation = _pytree.tree_map(
-                    lambda x: torch.as_tensor(x, device=self.device)
-                    .contiguous()
-                    .clone()
-                    if x is not None
-                    else x,
+                    lambda x: _to_device(x) if x is not None else x,
                     observation,
                 )
-                actions = actions.to(torch.float32)
+                actions = actions.to(_float_dtype if _float_dtype is not None else torch.float32)
                 actions = actions.to(self.device)
 
                 with self.amp_context:
