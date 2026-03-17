@@ -24,7 +24,7 @@ runner:
     experiment_name: "maniskill_sft_openpi_pi05_lora_lr${actor.optim.lr}_bs${actor.micro_batch_size}"
     logger_backends: ["wandb"]
 
-  max_epochs: 1000
+  max_epochs: 2000
   max_steps: -1
   val_check_interval: -1
   save_interval: 200
@@ -57,22 +57,22 @@ actor:
       train_expert_only: False
 
   optim:
-    # lr: 1e-3
-    # value_lr: 1e-3
-    # adam_beta1: 0.9
-    # adam_beta2: 0.95
-    # adam_eps: 1.0e-05
-    # weight_decay: 0.01
-    # clip_grad: 1.0
-
-    # # defaults from rlinf - lowkey very bad, don't use
-    lr: 7.91e-6
-    value_lr: 1.55e-4
+    lr: 5e-4
+    value_lr: 5e-4
     adam_beta1: 0.9
     adam_beta2: 0.95
-    adam_eps: 1.0e-08
+    adam_eps: 1.0e-05
     weight_decay: 0.01
     clip_grad: 1.0
+
+    # # defaults from rlinf - lowkey very bad, don't use
+    # lr: 7.91e-6
+    # value_lr: 1.55e-4
+    # adam_beta1: 0.9
+    # adam_beta2: 0.95
+    # adam_eps: 1.0e-08
+    # weight_decay: 0.01
+    # clip_grad: 1.0
 
   fsdp_config:
     strategy: "fsdp"

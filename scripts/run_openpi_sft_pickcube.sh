@@ -9,7 +9,7 @@
 #SBATCH --account=nlp
 
 cd /juice5b/scr5b/kaitwang/cs234/RLinf                                                                       
-source /juice5b/scr5b/kaitwang/cs234/RLinf/.venv/bin/activate
+source /nlp/scr/djghosh/vladata/rlinf_env_openpi/bin/activate
                                                                                                                             
 export HF_LEROBOT_HOME=/juice5b/scr5b/kaitwang/cs234      
 export EMBODIED_PATH=$(pwd)
