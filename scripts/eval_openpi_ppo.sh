@@ -23,11 +23,11 @@ export RAY_ADDRESS="local"
 export MUJOCO_GL="egl"
 export PYOPENGL_PLATFORM="egl"
 
-lr=7.91e-06
-step=1000
+lr=7.5e-4
+step=1600
 # modelpt=/juice5b/scr5b/kaitwang/cs234/results/maniskill_sft_openpi_pi05_lora_lr${lr}_bs16/checkpoints/global_step_${step}/actor/model.pt
 # modelpt=/juice5b/scr5b/kaitwang/cs234/results/maniskill_sft_openpi_pi05_lora_lr5e-05_bs16/checkpoints/global_step_600/actor/model.pt
-modelpt=/juice5b/scr5b/kaitwang/cs234/results/maniskill_sft_openpi_pi05_lora_lr7.91e-06_bs16/checkpoints/global_step_1000/actor/model.pt
+modelpt=/juice5b/scr5b/kaitwang/cs234/results/maniskill_sft_openpi_pi05_lora_lr0.00075_bs16/checkpoints/global_step_1600/actor/model.pt
 logdir=/juice5b/scr5b/kaitwang/cs234/results/eval_openpi_pickcube_lr${lr}_step${step}
 
 python $EMBODIED_PATH/eval_embodied_agent.py \

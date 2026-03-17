@@ -1,5 +1,5 @@
 defaults:
-  - model/pi0@actor.model
+  - model/openvla_oft@actor.model
   - training_backend/fsdp@actor.fsdp_config
   - override hydra/job_logging: stdout
 
@@ -7,8 +7,6 @@ hydra:
   run:
     dir: .
   output_subdir: null
-  searchpath:
-    - file://${oc.env:EMBODIED_PATH}/config
 
 cluster:
   num_nodes: 1
@@ -20,17 +18,17 @@ runner:
   logger:
     log_path: "../results"
     project_name: rlinf
-    # experiment_name: "maniskill_sft_openpi_pi05_lora"
-    experiment_name: "maniskill_sft_openpi_pi05_lora_lr${actor.optim.lr}_bs${actor.micro_batch_size}"
+    experiment_name: "maniskill_sft_openvlaoft_pickcube"
     logger_backends: ["wandb"]
 
-  max_epochs: 2000
+  max_epochs: 1000
   max_steps: -1
   val_check_interval: -1
-  save_interval: 200
+  save_interval: 5
 
 data:
   data_path: "/juice5b/scr5b/kaitwang/cs234/maniskill-demos"
+  task_instruction: "pick up the cube"
 
 algorithm:
   adv_type: gae
@@ -39,40 +37,31 @@ actor:
   group_name: "ActorGroup"
   training_backend: "fsdp"
   micro_batch_size: 16
-  global_batch_size: 64
+  global_batch_size: 64 
   seed: 0
 
   model:
-    precision: null
-    model_path: "/juice5b/scr5b/kaitwang/cache/huggingface/hub/RLinf-Pi05-ManiSkill-25Main-SFT"
-    num_action_chunks: 4
-    num_steps: 5
+    model_path: "/juice5b/scr5b/kaitwang/cache/huggingface/hub/models--Haozhan72--Openvla-oft-SFT-libero10-trajall/snapshots/97d6e58bc5fbc402e85bab382e4206bb8e5f0db0"
+    model_type: "openvla_oft"
+
+    unnorm_key: bridge_orig
+    policy_setup: "panda-ee-target-dpos"
     add_value_head: True
+
+    # precision: "bf16"
+
     is_lora: True
     lora_rank: 32
-    openpi:
-      pi05: True
-      config_name: "pi05_maniskill_pickcube"
-      noise_method: "flow_sde"
-      train_expert_only: False
+    lora_path: "/juice5b/scr5b/kaitwang/cache/huggingface/hub/models--RLinf--RLinf-OpenVLAOFT-ManiSkill-Base-Lora/snapshots/102dc3c7cd4262a4f28a8cf303d792bcd68b7058"
+    max_prompt_length: 30
 
   optim:
-    lr: 2.5e-4
-    value_lr: 2.5e-4
+    lr: 5e-5
     adam_beta1: 0.9
-    adam_beta2: 0.95
-    adam_eps: 1.0e-05
+    adam_beta2: 0.999
+    adam_eps: 1.0e-08
     weight_decay: 0.01
-    clip_grad: 1.0
-
-    # # defaults from rlinf - lowkey very bad, don't use
-    # lr: 7.91e-6
-    # value_lr: 1.55e-4
-    # adam_beta1: 0.9
-    # adam_beta2: 0.95
-    # adam_eps: 1.0e-08
-    # weight_decay: 0.01
-    # clip_grad: 1.0
+    clip_grad: 10.0
 
   fsdp_config:
     strategy: "fsdp"
